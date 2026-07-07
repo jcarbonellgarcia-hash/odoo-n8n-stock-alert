@@ -1,0 +1,671 @@
+{
+  "name": "Stock Alert - Tornillo M8",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -816,
+        -128
+      ],
+      "id": "c2e66120-b273-408c-8317-06c9f0727666",
+      "name": "CheckEveryHour"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ferreteriapuerto.odoo.com/jsonrpc",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"call\",\n  \"params\": {\n    \"service\": \"object\",\n    \"method\": \"execute_kw\",\n    \"args\": [\n      \"ferreteriapuerto\",\n      2,\n      \"API KEY HERE\",\n      \"stock.quant\",\n      \"search_read\",\n      [[[\"location_id.usage\", \"=\", \"internal\"], [\"quantity\", \">\", 0]]],\n      {\"fields\": [\"product_id\", \"lot_id\", \"quantity\"], \"limit\": 10}\n    ]\n  },\n  \"id\": 1\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -624,
+        -384
+      ],
+      "id": "2228f8de-20dd-43cd-8d52-659ee6bfa53d",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "result",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        -384
+      ],
+      "id": "5fed674f-ca6b-4ab3-9ecc-a5b6962635aa",
+      "name": "Split Out"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "6225d8b4-7232-42b8-aaa5-22d96c4d4b6f",
+              "leftValue": "={{$json.sum_quantity}}",
+              "rightValue": "={{$json.reordering_min_qty}}",
+              "operator": {
+                "type": "number",
+                "operation": "lt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        48,
+        32
+      ],
+      "id": "d0e2b947-049c-4a06-8fc0-ab0f26637f14",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "406855",
+        "text": "=⚠️ Stock bajo: {{$json.name}}\nActual: {{$json.sum_quantity}} unidades\nMínimo: {{$json.reordering_min_qty}} unidades",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        544,
+        -256
+      ],
+      "id": "a6356f1b-ac99-44c6-9923-94750e962d10",
+      "name": "Send a text message",
+      "webhookId": "2cab8b4d-d71c-4b4d-a556-ccf6fce16aa2",
+      "alwaysOutputData": false,
+      "credentials": {
+        "telegramApi": {
+          "id": "gYtsj12xxO7I8zl9",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "fieldsToSummarize": {
+          "values": [
+            {
+              "aggregation": "sum",
+              "field": "quantity"
+            }
+          ]
+        },
+        "fieldsToSplitBy": "productId",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.summarize",
+      "typeVersion": 1.1,
+      "position": [
+        -208,
+        -384
+      ],
+      "id": "5ce0aa95-a0b0-4db8-8a02-dd3c7515fcb1",
+      "name": "Summarize"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://ferreteriapuerto.odoo.com/jsonrpc",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "{\n  \"jsonrpc\": \"2.0\",\n  \"method\": \"call\",\n  \"params\": {\n    \"service\": \"object\",\n    \"method\": \"execute_kw\",\n    \"args\": [\n      \"ferreteriapuerto\",\n      2,\n      \"API KEY HERE\",\n      \"product.template\",\n      \"search_read\",\n      [[[\"is_storable\", \"=\", true]]],\n      {\"fields\": [\"id\", \"name\", \"reordering_min_qty\"], \"limit\": 20}\n    ]\n  },\n  \"id\": 1\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.4,
+      "position": [
+        -640,
+        0
+      ],
+      "id": "15bbe08a-b10e-493b-b419-7c175edc5d9f",
+      "name": "HTTP Request1"
+    },
+    {
+      "parameters": {
+        "fieldToSplitOut": "result",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitOut",
+      "typeVersion": 1,
+      "position": [
+        -496,
+        16
+      ],
+      "id": "69e7921b-2948-4bad-8030-e00a24d9f5f9",
+      "name": "Split Out1"
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "advanced": true,
+        "mergeByFields": {
+          "values": [
+            {
+              "field1": "productId",
+              "field2": "productId"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -80,
+        -176
+      ],
+      "id": "0a8650a9-1b33-41f3-95a0-69791a780118",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "842ec4e0-c85a-4dc4-bf75-037cca9bf995",
+              "name": "productId",
+              "value": "={{$json.product_id[0]}}",
+              "type": "number"
+            },
+            {
+              "id": "907641ca-1f8f-4817-b8ce-deeb3181ed7d",
+              "name": "quantity",
+              "value": "={{$json.quantity}}",
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": "={{ false }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -352,
+        -384
+      ],
+      "id": "e39c6342-1263-4ec7-8253-ff62bd1629d5",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "9688126f-c0d5-4409-80ad-2d78ef74218b",
+              "name": "productId",
+              "value": "={{$json.id}}",
+              "type": "number"
+            },
+            {
+              "id": "a5e010f1-ea8e-4f7f-b046-2efb6896b76b",
+              "name": "reordering_min_qty",
+              "value": "={{$json.reordering_min_qty}}",
+              "type": "number"
+            },
+            {
+              "id": "f235b459-6d74-4f0a-9517-f7781e687d0b",
+              "name": "name",
+              "value": "={{$json.name}}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -352,
+        16
+      ],
+      "id": "c18b9d72-7d2f-48da-8fbb-643313bcf250",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "92eb53c9-561f-4ebf-95c4-f26c5ea5b8b2",
+              "leftValue": "={{$json.reordering_min_qty}}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "gt"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.3,
+      "position": [
+        -224,
+        32
+      ],
+      "id": "08a1c984-41a1-4d5e-87c3-2fdaeac72d5d",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ei1qGVjrIuJGyU6E",
+          "mode": "list",
+          "cachedResultName": "stock_alert_state",
+          "cachedResultUrl": "/projects/kVdcN5GvoBRc1e9o/datatables/ei1qGVjrIuJGyU6E"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "productId",
+              "keyValue": "={{$json.productId}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "alerted": "=true",
+            "productId": "={{$json.productId}}\n",
+            "lastAlertDate": "={{$now}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "productId",
+              "displayName": "productId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "alerted",
+              "displayName": "alerted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lastAlertDate",
+              "displayName": "lastAlertDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        560,
+        -32
+      ],
+      "id": "f938d491-c8ec-450d-a138-2bda84fc3dbf",
+      "name": "Upsert row(s)"
+    },
+    {
+      "parameters": {
+        "operation": "get",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ei1qGVjrIuJGyU6E",
+          "mode": "list",
+          "cachedResultName": "stock_alert_state",
+          "cachedResultUrl": "/projects/kVdcN5GvoBRc1e9o/datatables/ei1qGVjrIuJGyU6E"
+        },
+        "returnAll": true
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        112,
+        -352
+      ],
+      "id": "9479720c-fff1-4187-a7bc-20f3e1ab9a1d",
+      "name": "Get row(s)",
+      "alwaysOutputData": true,
+      "executeOnce": true
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "fieldsToMatchString": "productId",
+        "joinMode": "keepNonMatches",
+        "outputDataFrom": "input1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        272,
+        -144
+      ],
+      "id": "23eeb2e6-d97d-412c-a972-31fde9cea211",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "dataTableId": {
+          "__rl": true,
+          "value": "ei1qGVjrIuJGyU6E",
+          "mode": "list",
+          "cachedResultName": "stock_alert_state",
+          "cachedResultUrl": "/projects/kVdcN5GvoBRc1e9o/datatables/ei1qGVjrIuJGyU6E"
+        },
+        "filters": {
+          "conditions": [
+            {
+              "keyName": "productId",
+              "keyValue": "={{$json.productId}}"
+            }
+          ]
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "alerted": false,
+            "productId": "={{$json.productId}}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "productId",
+              "displayName": "productId",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "alerted",
+              "displayName": "alerted",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "boolean",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "lastAlertDate",
+              "displayName": "lastAlertDate",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "dateTime",
+              "readOnly": false,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.dataTable",
+      "typeVersion": 1.1,
+      "position": [
+        256,
+        128
+      ],
+      "id": "622d6604-432f-4bff-baf3-dc0363c1a777",
+      "name": "Upsert row(s)1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "CheckEveryHour": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Split Out",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Get row(s)",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Upsert row(s)1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Summarize": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Split Out1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Split Out1": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Summarize",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Send a text message": {
+      "main": [
+        []
+      ]
+    },
+    "Get row(s)": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Upsert row(s)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false,
+    "timeSavedMode": "fixed",
+    "callerPolicy": "workflowsFromSameOwner"
+  },
+  "versionId": "6a5fdf2c-453b-4897-8bac-41efce7031f0",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "2202347d5d2d1b4d214b5582f3b623fb8f882730ef7d5c6b82922053436c662f"
+  },
+  "nodeGroups": [],
+  "id": "aPcWl05AGaSYFIRH",
+  "tags": []
+}
